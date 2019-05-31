@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+//引入其他的protobuf文件
+import "otherprotos.proto"; //只会引入这个文件中定义的message不会引入这个文件引入的其他的文件的message
+//import public "otherprotos.proto";    //递归引入
+
+//定义生成java文件包路径
+option java_package = "top.kwseeker.protobuf";
+
+//message，对于java来说，每个message都会被protoc编译成一个类class和一个用于创建其实例的Builder类
+message SearchRequest {
+    //类型 field名称 field唯一ID，用于标识2进制格式field
+    //filed ID 1-15占一个字节，15-2047占两个字节，id支持1-(2^29-1), 19000-19999被保留
+    //基本数据类型（double float int32 int64 uint32 uint64 sint32 sint64 fixed32 fixed64 sfix32 sfix64 bool string bytes）
+    string query = 1;
+    int32 page_number = 2;
+    int32 result_per_page = 3;
+    //为了防止有些被删除的filed的名字和ID被其他field使用导致异常，应该使用reserved保留这些名字和ID
+    //int32 page_count = 4;
+    reserved 4;
+    reserved "page_count";  //ID和名字不能同行，ID和ID可以同行，名字和名字可以同行
+    //复合数据类型
+    enum Corpus {       //
+        option allow_alias = true;
+        UNIVERSAL = 0;  //这里的数字表示枚举类型的值,第一个值必需为0
+        WEB = 1;
+        IMAGES = 2;
+        PICTURES = 2;    //IMAGES的别名
+        reserved 9 to 11, 40 to max;    //enum中保留值
+        reserved "FOO";
+    }
+    enum CorpusNotAllowingAlias {
+        UNIVERSAL = 0;  //这里的数字表示枚举类型的值,第一个值必需为0
+        WEB = 1;
+        IMAGES = 2;
+        //PICTURES = 2;    //取消注释这行会报错
+    }
+    Corpus corpus = 5;
+    Foo.FooEnum fooEnum = 6;    //引用另一个message中的枚举类型
+
+    //使用另一个message作为field
+    repeated Result results = 7;
+}
+
+message Foo {
+    enum FooEnum {
+        TEST = 0;
+    }
+}
+
+message Result {
+    string url = 1;
+    string title = 2;
+    repeated string snippets = 3;
+}
